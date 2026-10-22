@@ -1,0 +1,18 @@
+{
+  "name": "AI-ready .NET workspace",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0-noble",
+  "remoteUser": "vscode",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "AiReadyWorkspace.slnx",
+        "editor.formatOnSave": true
+      }
+    }
+  }
+}

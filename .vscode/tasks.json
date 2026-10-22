@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dotnet: restore",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["restore", "AiReadyWorkspace.slnx"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "dotnet: build",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "AiReadyWorkspace.slnx", "--no-restore"],
+      "dependsOn": "dotnet: restore",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "dotnet: test",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "AiReadyWorkspace.slnx", "--no-build"],
+      "dependsOn": "dotnet: build",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}
