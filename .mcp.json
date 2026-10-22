@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "workspace": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "tools/Workspace.McpServer/Workspace.McpServer.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "--workspace",
+        "."
+      ]
+    }
+  }
+}

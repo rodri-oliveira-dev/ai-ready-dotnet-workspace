@@ -8,8 +8,13 @@ readonly REQUIRED_FILES=(
   ".github/instructions/dotnet.instructions.md"
   ".github/instructions/architecture.instructions.md"
   ".github/instructions/testing.instructions.md"
+  ".github/agents/architecture-reviewer.agent.md"
   ".github/prompts/implement-feature.prompt.md"
   ".github/prompts/review-changes.prompt.md"
+  ".github/prompts/review-architecture.prompt.md"
+  ".agents/skills/validate-change/SKILL.md"
+  ".mcp.json"
+  ".codex/config.toml"
 )
 
 fail() {
@@ -67,13 +72,32 @@ validate_apply_to ".github/instructions/testing.instructions.md" "tests/**/*.cs"
 for file in .github/prompts/*.prompt.md; do
   validate_frontmatter "$file"
   sed -n '2,/^---$/p' "$file" | grep -Eq '^description: ' || fail "$file needs a description"
-  sed -n '2,/^---$/p' "$file" | grep -Eq "^agent: '(agent|ask|plan)'$" || fail "$file has an unsupported agent"
+  sed -n '2,/^---$/p' "$file" | grep -Eq "^agent: '(agent|ask|plan|Architecture Reviewer)'$" || fail "$file has an unsupported agent"
 done
+
+validate_frontmatter ".github/agents/architecture-reviewer.agent.md"
+grep -Fqx "tools: ['read', 'search', 'workspace/*']" \
+  ".github/agents/architecture-reviewer.agent.md" ||
+  fail "architecture reviewer must expose only read, search, and workspace MCP tools"
+
+validate_frontmatter ".agents/skills/validate-change/SKILL.md"
+sed -n '2,/^---$/p' ".agents/skills/validate-change/SKILL.md" |
+  grep -Eq '^name: validate-change$' || fail "validate-change skill has an invalid name"
+sed -n '2,/^---$/p' ".agents/skills/validate-change/SKILL.md" |
+  grep -Eq '^description: .+' || fail "validate-change skill needs a description"
+
+grep -Fq '"mcpServers"' .mcp.json || fail ".mcp.json must use the portable format"
+grep -Fq '"workspace"' .mcp.json || fail ".mcp.json must configure the workspace server"
+[[ ! -f .vscode/mcp.json ]] || fail "legacy or duplicate .vscode/mcp.json is not expected"
 
 if [[ -f .codex/config.toml ]]; then
   if grep -Eq '(^|[[:space:]])(danger-full-access|never)([[:space:]]|$)' .codex/config.toml; then
     fail ".codex/config.toml broadens permissions or suppresses approvals"
   fi
+  grep -Fq '[mcp_servers.workspace]' .codex/config.toml ||
+    fail ".codex/config.toml must configure the workspace MCP server"
+  grep -Fq 'enabled_tools = ["list_dotnet_projects", "get_architecture_rules"]' \
+    .codex/config.toml || fail "Codex must allowlist the read-only workspace tools"
 fi
 
 duplicate_rule="$(sed -n 's/^- /- /p' AGENTS.md .github/copilot-instructions.md .github/instructions/*.instructions.md | sort | uniq -d | head -n 1)"

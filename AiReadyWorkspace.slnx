@@ -4,5 +4,9 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SampleApi.Tests/SampleApi.Tests.csproj" />
+    <Project Path="tests/Workspace.McpServer.Tests/Workspace.McpServer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Workspace.McpServer/Workspace.McpServer.csproj" />
   </Folder>
 </Solution>

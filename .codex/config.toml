@@ -1,0 +1,9 @@
+[mcp_servers.workspace]
+command = "dotnet"
+args = ["run", "--project", "tools/Workspace.McpServer/Workspace.McpServer.csproj", "--configuration", "Release", "--no-build", "--", "--workspace", "."]
+cwd = "."
+enabled_tools = ["list_dotnet_projects", "get_architecture_rules"]
+default_tools_approval_mode = "prompt"
+startup_timeout_sec = 30
+tool_timeout_sec = 15
+required = false
