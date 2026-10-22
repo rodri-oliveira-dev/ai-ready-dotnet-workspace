@@ -24,7 +24,8 @@ not evidence that an AI client, host, or cloud environment is isolated.
   restore with `--locked-mode` in CI and the Dev Container, and leave auditing
   enabled. Review Dependabot changes before merging them.
 - Run `./scripts/validate-ai-context.sh`, `./scripts/validate-security.sh`, the
-  formatting check, Release build, and full tests before handoff.
+  evaluation and template validators, the formatting check, Release build, and
+  full tests before handoff.
 
 The repository currently needs no application secret or runtime parameter, so it
 does not include `.env.example`. Add one only when a concrete local parameter is

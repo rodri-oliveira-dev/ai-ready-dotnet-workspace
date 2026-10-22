@@ -90,9 +90,32 @@ public sealed class ConfigurationTests
             workflow);
         Assert.Contains("persist-credentials: false", workflow, StringComparison.Ordinal);
         Assert.Contains("./scripts/validate-security.sh", workflow, StringComparison.Ordinal);
+        Assert.Contains("./scripts/validate-evaluations.sh", workflow, StringComparison.Ordinal);
+        Assert.Contains("./scripts/validate-template.sh", workflow, StringComparison.Ordinal);
         Assert.DoesNotContain("permissions: write", workflow, StringComparison.Ordinal);
         Assert.DoesNotContain("${{ secrets.", workflow, StringComparison.Ordinal);
         Assert.DoesNotContain("pull_request_target", workflow, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EvaluationReportTemplateDoesNotClaimAnExecution()
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(RepositoryRoot, "evaluations", "report-template.json")));
+        var root = document.RootElement;
+        var execution = root.GetProperty("execution");
+        var metrics = root.GetProperty("metrics");
+        var tokens = metrics.GetProperty("tokens");
+
+        Assert.Equal("not_run", root.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, execution.GetProperty("dateUtc").ValueKind);
+        Assert.Equal(JsonValueKind.Null, execution.GetProperty("initialCommit").ValueKind);
+        Assert.Equal(JsonValueKind.Null, metrics.GetProperty("durationSeconds").ValueKind);
+        Assert.Equal("unavailable", tokens.GetProperty("availability").GetString());
+        Assert.Equal(JsonValueKind.Null, tokens.GetProperty("inputTokens").ValueKind);
+        Assert.Equal(JsonValueKind.Null, tokens.GetProperty("outputTokens").ValueKind);
+        Assert.Equal(JsonValueKind.Null, metrics.GetProperty("manualCorrections")
+            .GetProperty("count").ValueKind);
     }
 
     private static string FindRepositoryRoot()

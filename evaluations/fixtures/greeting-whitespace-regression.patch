@@ -1,0 +1,11 @@
+diff --git a/src/SampleApi/Program.cs b/src/SampleApi/Program.cs
+--- a/src/SampleApi/Program.cs
++++ b/src/SampleApi/Program.cs
+@@ -9,6 +9,6 @@
+ app.MapGet("/api/greeting", (string? name) =>
+     {
+-        var recipient = string.IsNullOrWhiteSpace(name) ? "World" : name.Trim();
++        var recipient = name ?? "World";
+         return Results.Ok(new GreetingResponse($"Hello, {recipient}!"));
+     })
+     .WithName("Greeting");

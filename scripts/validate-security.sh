@@ -9,6 +9,8 @@ readonly REQUIRED_FILES=(
   ".github/workflows/ci.yml"
   ".devcontainer/devcontainer.json"
   ".codex/config.toml"
+  "scripts/validate-evaluations.sh"
+  "scripts/validate-template.sh"
 )
 
 fail() {
@@ -33,6 +35,10 @@ grep -Fq './scripts/validate-ai-context.sh' .github/workflows/ci.yml ||
   fail "CI must validate AI context"
 grep -Fq './scripts/validate-security.sh' .github/workflows/ci.yml ||
   fail "CI must validate the security baseline"
+grep -Fq './scripts/validate-evaluations.sh' .github/workflows/ci.yml ||
+  fail "CI must validate evaluation definitions"
+grep -Fq './scripts/validate-template.sh' .github/workflows/ci.yml ||
+  fail "CI must validate template initialization"
 
 grep -Fq 'permissions:' .github/workflows/ci.yml || fail "CI must declare token permissions"
 grep -Fq '  contents: read' .github/workflows/ci.yml || fail "CI contents permission must be read-only"

@@ -13,6 +13,10 @@ Verify the requested change without expanding its scope or modifying product cod
    - Always run `git diff --check`, `./scripts/validate-ai-context.sh`, and
      `./scripts/validate-security.sh` when AI context, agents, skills, prompts,
      MCP, Dev Container, dependency, or workflow configuration changed.
+   - Run `./scripts/validate-evaluations.sh` when evaluation scenarios, evidence
+     contracts, or comparison protocols change.
+   - Run `./scripts/validate-template.sh` when template naming, initialization,
+     project paths, namespaces, or their validation changes.
    - For .NET changes, run the repository commands below in order.
    - Run focused tests first when they provide faster failure feedback, then run
      the full suite before handoff.

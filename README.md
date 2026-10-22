@@ -49,6 +49,14 @@ cases and residual risks. The [security baseline](docs/security/security-baselin
 separates mandatory repository controls from recommendations and controls that
 must be enforced by the user's environment or organization.
 
+To validate the versioned AI evaluation contract and exercise initialization in
+an isolated derived copy, run:
+
+```bash
+./scripts/validate-evaluations.sh
+./scripts/validate-template.sh
+```
+
 VS Code tasks named `dotnet: restore`, `dotnet: build`, and `dotnet: test` provide the same workflow from the command palette.
 
 ## Repository structure
@@ -111,6 +119,41 @@ When Copilot or Codex is unavailable, do not treat file validation or unit tests
 
 ## Use as a template
 
-Create a repository from this template, then rename `AiReadyWorkspace.slnx`, the `SampleApi` projects, and their namespaces for your product. Keep project paths aligned in the solution, test project reference, VS Code settings/tasks, workflow, and scripts.
+Create a repository from this template, then run the targeted initializer from its
+root:
+
+```bash
+./scripts/initialize-template.sh \
+  --solution-name ContosoWorkspace \
+  --project-name Contoso.Api
+```
+
+The initializer renames the solution, application and test projects, namespaces,
+project references, and known command/configuration references. It deliberately
+keeps `Workspace.McpServer` provider-neutral, rejects unsafe names or conflicting
+targets, records the selected names in `.template-initialized`, and treats a
+second run with the same arguments as a no-op. A second run with different names
+fails rather than partially renaming the repository. Commit the state file with
+the initialized repository so its CI can verify idempotence.
+
+`./scripts/validate-template.sh` copies tracked and unignored files to a uniquely
+named temporary directory, initializes that copy twice, checks for functional
+references to the template names, and runs locked restore, formatting, Release
+build, and tests. Its cleanup is restricted to the temporary directory it creates;
+the source repository is compared before and after the run.
+
+## AI evaluation protocol
+
+The [evaluation suite](evaluations/README.md) defines versioned endpoint, bug-fix,
+test-creation, architecture-review, prompt-injection, and unauthorized-access
+scenarios. Its [paired protocol](evaluations/protocol.md) compares identical clean
+copies with and without repository AI context while holding the model, version,
+task, initial commit, client, sandbox, network policy, and other recorded
+conditions constant when possible.
+
+The JSON report template starts as `not_run`. Real Copilot or Codex results must
+include captured commands, logs, tool audit, duration, client-reported tokens when
+available, manual corrections, and limitations. Repository validators check the
+scenario and report contract but do not claim that an LLM experiment ran.
 
 This repository is prepared for later stages without preselecting an AI runtime provider, model, database, or secret-management approach.
