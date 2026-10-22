@@ -68,6 +68,20 @@ public sealed class WorkspaceReaderTests : IDisposable
         Assert.DoesNotContain(result.Rules, rule => rule.Contains("Secret", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void WorkspaceToolReturnsSanitizedErrorForInvalidProject()
+    {
+        var projectPath = Path.Combine(_workspace, "src", "Demo", "Demo.csproj");
+        File.WriteAllText(projectPath, "<Project><invalid>");
+        var tools = new WorkspaceTools(CreateReader());
+
+        var exception = Assert.Throws<InvalidOperationException>(tools.ListDotNetProjects);
+
+        Assert.Equal("The workspace project catalog could not be read safely.", exception.Message);
+        Assert.Null(exception.InnerException);
+        Assert.DoesNotContain(_workspace, exception.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
     public void Dispose()
     {
         Directory.Delete(_workspace, recursive: true);

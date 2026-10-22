@@ -2,6 +2,8 @@ namespace Workspace.McpServer;
 
 public sealed class WorkspacePathPolicy
 {
+    private const int MaximumRelativePathLength = 1024;
+
     private static readonly HashSet<string> SensitiveSegments = new(
         [".git", ".ssh", ".nuget"],
         StringComparer.OrdinalIgnoreCase);
@@ -14,6 +16,12 @@ public sealed class WorkspacePathPolicy
         if (!Directory.Exists(RootPath))
         {
             throw new DirectoryNotFoundException("The authorized workspace does not exist.");
+        }
+
+        if ((File.GetAttributes(RootPath) & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new UnauthorizedAccessException(
+                "The authorized workspace root cannot be a symbolic link or reparse point.");
         }
     }
 
@@ -35,12 +43,27 @@ public sealed class WorkspacePathPolicy
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
 
+        if (relativePath.Length > MaximumRelativePathLength || relativePath.Any(char.IsControl))
+        {
+            throw new ArgumentException("The workspace-relative path is invalid.", nameof(relativePath));
+        }
+
         if (Path.IsPathRooted(relativePath))
         {
             throw new UnauthorizedAccessException("Only workspace-relative paths are allowed.");
         }
 
-        var candidate = Path.GetFullPath(Path.Combine(RootPath, relativePath));
+        string candidate;
+        try
+        {
+            candidate = Path.GetFullPath(Path.Combine(RootPath, relativePath));
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException)
+        {
+            throw new ArgumentException(
+                "The workspace-relative path is invalid.",
+                nameof(relativePath));
+        }
         var normalizedRelative = Path.GetRelativePath(RootPath, candidate);
 
         if (normalizedRelative == ".." ||

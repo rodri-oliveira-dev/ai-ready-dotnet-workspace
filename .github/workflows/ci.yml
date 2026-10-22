@@ -17,15 +17,22 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
+      - name: Validate AI and security configuration
+        run: |
+          ./scripts/validate-ai-context.sh
+          ./scripts/validate-security.sh
+
       - name: Restore dependencies
-        run: dotnet restore AiReadyWorkspace.slnx
+        run: dotnet restore AiReadyWorkspace.slnx --locked-mode
 
       - name: Verify formatting
         run: dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore

@@ -56,6 +56,7 @@ dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore
 dotnet test AiReadyWorkspace.slnx --configuration Release --no-build
 ./scripts/validate-ai-context.sh
+./scripts/validate-security.sh
 ```
 
 ## Completion criteria

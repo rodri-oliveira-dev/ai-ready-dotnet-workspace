@@ -1,7 +1,12 @@
 {
   "name": "AI-ready .NET workspace",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0-noble",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0-noble@sha256:694076b55f447d4b9f5b49bc6616c2e904d63e1a61e43680b2bbea46011b6783",
+  "containerUser": "vscode",
   "remoteUser": "vscode",
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges:true"
+  ],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {

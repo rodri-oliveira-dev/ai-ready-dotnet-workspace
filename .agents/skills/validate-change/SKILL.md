@@ -10,8 +10,9 @@ Verify the requested change without expanding its scope or modifying product cod
 1. Read the applicable `AGENTS.md`, inspect `git status`, and identify the changed
    paths. Preserve unrelated work and do not clean or revert it.
 2. Select checks from the changed surface:
-   - Always run `git diff --check` and `./scripts/validate-ai-context.sh` when AI
-     context, agents, skills, prompts, or MCP configuration changed.
+   - Always run `git diff --check`, `./scripts/validate-ai-context.sh`, and
+     `./scripts/validate-security.sh` when AI context, agents, skills, prompts,
+     MCP, Dev Container, dependency, or workflow configuration changed.
    - For .NET changes, run the repository commands below in order.
    - Run focused tests first when they provide faster failure feedback, then run
      the full suite before handoff.
@@ -27,7 +28,7 @@ Verify the requested change without expanding its scope or modifying product cod
 Run from the repository root:
 
 ```bash
-dotnet restore AiReadyWorkspace.slnx
+dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore
 dotnet test AiReadyWorkspace.slnx --configuration Release --no-build

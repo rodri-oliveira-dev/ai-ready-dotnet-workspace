@@ -37,6 +37,18 @@ To validate the versioned AI context files, their frontmatter, scoped globs, pro
 ./scripts/validate-ai-context.sh
 ```
 
+To validate the deterministic security policy for CI, the Dev Container, Codex,
+and the MCP allowlist, run:
+
+```bash
+./scripts/validate-security.sh
+```
+
+The [threat model](docs/security/threat-model.md) describes the relevant abuse
+cases and residual risks. The [security baseline](docs/security/security-baseline.md)
+separates mandatory repository controls from recommendations and controls that
+must be enforced by the user's environment or organization.
+
 VS Code tasks named `dotnet: restore`, `dotnet: build`, and `dotnet: test` provide the same workflow from the command palette.
 
 ## Repository structure
@@ -66,7 +78,12 @@ The repository keeps shared, durable rules in [`AGENTS.md`](AGENTS.md) and adds 
 | `.mcp.json` | Portable Copilot workspace configuration for controlled MCP capabilities. |
 | `.codex/config.toml` | Trusted-project Codex configuration for the same local MCP server and its tool allowlist. |
 
-The Codex project configuration contains only the workspace MCP connection. It does not select a model, enable network access, broaden filesystem permissions, or suppress approvals. Codex loads this file only after the project is trusted; its CLI, IDE extension, and desktop app share the effective MCP configuration.
+The Codex project configuration limits writes to the workspace, disables command
+network access and login shells, keeps human-reviewed on-request elevation, and
+allowlists only the workspace MCP tools. It does not select a model or credential.
+Codex loads project configuration only after the project is trusted; higher-level
+or managed configuration and client capabilities still determine the effective
+boundary.
 
 Precedence differs by client. Codex assembles `AGENTS.md` from the global scope through the project tree and lets closer files override earlier guidance. Most Copilot clients combine applicable repository and path instructions without a general precedence rule; Copilot Chat on GitHub.com documents personal instructions first, then path-specific, repository-wide, agent, and organization instructions. Therefore these files are complementary and must not depend on conflicts being resolved in a particular order. See the official [Codex `AGENTS.md` guide](https://developers.openai.com/codex/guides/agents-md), [Codex configuration reference](https://developers.openai.com/codex/config-reference), and [GitHub Copilot custom-instructions guide](https://docs.github.com/en/copilot/concepts/prompting-and-context/custom-instructions).
 
@@ -79,7 +96,7 @@ These mechanisms have separate responsibilities:
 - `Workspace.McpServer` exposes capabilities, not behavior: `list_dotnet_projects` returns selected project metadata and `get_architecture_rules` returns only the applicable section of `AGENTS.md`.
 - `/review-architecture` selects the reviewer, references the skill, and directs it to the MCP tools. A prompt coordinates the three mechanisms but does not grant additional capabilities.
 
-The MCP server uses the official `ModelContextProtocol` C# SDK over stdio. It has no command-execution tool, network dependency, write tool, credential input, or arbitrary file-read tool. Paths are constrained to the configured workspace; sensitive paths, traversal, absolute paths, and symbolic links are rejected. Build the Release configuration before a client starts the checked-in `--no-build` command:
+The MCP server uses the official `ModelContextProtocol` C# SDK over stdio. It has no command-execution tool, network dependency, write tool, credential input, or arbitrary file-read tool. Paths are constrained to the configured workspace; malformed or excessive inputs, sensitive paths, traversal, absolute paths, and symbolic links are rejected. Client-facing errors are sanitized. Build the Release configuration before a client starts the checked-in `--no-build` command:
 
 ```bash
 dotnet build AiReadyWorkspace.slnx --configuration Release

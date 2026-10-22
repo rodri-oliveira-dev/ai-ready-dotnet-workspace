@@ -35,6 +35,8 @@ public sealed class McpServerIntegrationTests
             ["get_architecture_rules", "list_dotnet_projects"],
             tools.Select(tool => tool.Name).Order(StringComparer.Ordinal).ToArray());
         Assert.All(tools, tool => Assert.True(tool.ProtocolTool.Annotations?.ReadOnlyHint));
+        Assert.All(tools, tool => Assert.False(tool.ProtocolTool.Annotations?.DestructiveHint));
+        Assert.All(tools, tool => Assert.False(tool.ProtocolTool.Annotations?.OpenWorldHint));
 
         var result = await client.CallToolAsync(
             "list_dotnet_projects",

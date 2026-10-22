@@ -15,7 +15,9 @@ public sealed class WorkspaceTools(WorkspaceReader workspaceReader)
         OpenWorld = false,
         UseStructuredContent = true)]
     [Description("Lists sanitized .NET project metadata inside the authorized workspace.")]
-    public ProjectCatalog ListDotNetProjects() => workspaceReader.ListDotNetProjects();
+    public ProjectCatalog ListDotNetProjects() => ExecuteSafely(
+        workspaceReader.ListDotNetProjects,
+        "The workspace project catalog could not be read safely.");
 
     [McpServerTool(
         Name = "get_architecture_rules",
@@ -26,5 +28,19 @@ public sealed class WorkspaceTools(WorkspaceReader workspaceReader)
         OpenWorld = false,
         UseStructuredContent = true)]
     [Description("Returns only the architecture responsibility section from the workspace AGENTS.md.")]
-    public ArchitectureRules GetArchitectureRules() => workspaceReader.GetArchitectureRules();
+    public ArchitectureRules GetArchitectureRules() => ExecuteSafely(
+        workspaceReader.GetArchitectureRules,
+        "The workspace architecture rules could not be read safely.");
+
+    private static TResult ExecuteSafely<TResult>(Func<TResult> operation, string safeErrorMessage)
+    {
+        try
+        {
+            return operation();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            throw new InvalidOperationException(safeErrorMessage);
+        }
+    }
 }
