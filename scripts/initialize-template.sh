@@ -104,6 +104,8 @@ replace_literal() {
 readonly -a SOLUTION_REFERENCE_FILES=(
   "AGENTS.md"
   "README.md"
+  "README.pt-BR.md"
+  "CONTRIBUTING.md"
   ".agents/skills/validate-change/SKILL.md"
   ".devcontainer/devcontainer.json"
   ".devcontainer/post-create.sh"
@@ -118,6 +120,8 @@ readonly -a SOLUTION_REFERENCE_FILES=(
 readonly -a PROJECT_REFERENCE_FILES=(
   "${ORIGINAL_SOLUTION_NAME}.slnx"
   "README.md"
+  "README.pt-BR.md"
+  "docs/architecture.md"
   "src/${ORIGINAL_PROJECT_NAME}/${ORIGINAL_PROJECT_NAME}.csproj"
   "src/${ORIGINAL_PROJECT_NAME}/Program.cs"
   "src/${ORIGINAL_PROJECT_NAME}/ApiResponses.cs"

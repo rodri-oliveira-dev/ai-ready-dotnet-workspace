@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a scoped, provider-neutral improvement to the template.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the concrete developer or maintainer need.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Define observable acceptance criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Alternatives and trade-offs
+      description: Explain why existing framework or repository features are insufficient.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Architecture and security impact
+      description: Identify new providers, permissions, dependencies, or trust boundaries.
+    validations:
+      required: true

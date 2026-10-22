@@ -83,9 +83,12 @@ git ls-files --cached --others --exclude-standard -z |
     ".devcontainer"
     ".github"
     ".vscode"
+    "docs"
     "evaluations"
     "AGENTS.md"
+    "CONTRIBUTING.md"
     "README.md"
+    "README.pt-BR.md"
     "scripts/verify-environment.sh"
   )
 
