@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Validate repository configuration
+        run: |
+          ./scripts/validate-ai-context.sh
+          ./scripts/validate-security.sh
+          ./scripts/validate-evaluations.sh
+
+      - name: Restore dependencies
+        run: dotnet restore AiReadyWorkspace.slnx --locked-mode
+
+      - name: Verify formatting
+        run: dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test AiReadyWorkspace.slnx --configuration Release --no-build --logger "console;verbosity=normal"
+
+      - name: Validate template initialization
+        run: ./scripts/validate-template.sh

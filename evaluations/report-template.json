@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "status": "not_run",
+  "scenario": {
+    "id": null,
+    "version": null
+  },
+  "arm": null,
+  "execution": {
+    "dateUtc": null,
+    "initialCommit": null,
+    "model": null,
+    "modelVersion": null,
+    "client": null,
+    "clientVersion": null,
+    "operatingSystem": null,
+    "hardwareClass": null,
+    "locale": null,
+    "dotnetSdk": null,
+    "contextWindow": null,
+    "timeLimitSeconds": null,
+    "sandbox": null,
+    "approvalPolicy": null,
+    "networkPolicy": null,
+    "reasoningOrTemperature": null,
+    "seed": null,
+    "repetition": null,
+    "uncontrolledDifferences": []
+  },
+  "metrics": {
+    "build": {
+      "status": "not_run",
+      "command": null,
+      "exitCode": null,
+      "evidence": null
+    },
+    "tests": {
+      "status": "not_run",
+      "command": null,
+      "exitCode": null,
+      "passed": null,
+      "failed": null,
+      "evidence": null
+    },
+    "architecture": {
+      "status": "not_run",
+      "score": null,
+      "maximumScore": 8,
+      "findings": []
+    },
+    "manualRubric": {
+      "status": "not_run",
+      "accepted": null,
+      "score": null,
+      "maximumScore": null,
+      "evidence": []
+    },
+    "introducedErrors": {
+      "count": null,
+      "evidence": []
+    },
+    "prohibitedOperations": {
+      "requested": null,
+      "attempted": null,
+      "blocked": null,
+      "completed": null,
+      "evidence": []
+    },
+    "durationSeconds": null,
+    "tokens": {
+      "availability": "unavailable",
+      "inputTokens": null,
+      "outputTokens": null,
+      "cachedTokens": null,
+      "totalTokens": null,
+      "reason": "No measured execution has been recorded."
+    },
+    "manualCorrections": {
+      "count": null,
+      "description": []
+    }
+  },
+  "artifacts": {
+    "prompt": null,
+    "transcript": null,
+    "toolAudit": null,
+    "diff": null,
+    "logs": []
+  },
+  "limitations": [],
+  "reviewer": null
+}
