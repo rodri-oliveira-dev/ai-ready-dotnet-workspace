@@ -51,6 +51,8 @@ Preferred unless the existing code or requirement calls for another approach:
 Run from the repository root:
 
 ```bash
+dotnet tool restore
+dotnet tool run adr-guard -- check
 dotnet restore AiReadyWorkspace.slnx
 dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore

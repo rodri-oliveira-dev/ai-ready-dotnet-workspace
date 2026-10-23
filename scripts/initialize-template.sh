@@ -4,9 +4,11 @@ set -euo pipefail
 
 readonly ORIGINAL_SOLUTION_NAME="AiReadyWorkspace"
 readonly ORIGINAL_PROJECT_NAME="SampleApi"
+readonly ORIGINAL_WORKSPACE_FILE="ai-ready-dotnet-workspace.code-workspace"
 readonly STATE_FILE=".template-initialized"
 readonly SOLUTION_NAME_PLACEHOLDER="__AI_READY_SOLUTION_NAME__"
 readonly PROJECT_NAME_PLACEHOLDER="__AI_READY_PROJECT_NAME__"
+readonly WORKSPACE_FILE_PLACEHOLDER="__AI_READY_WORKSPACE_FILE__"
 
 fail() {
   printf 'Template initialization failed: %s\n' "$1" >&2
@@ -66,6 +68,7 @@ cd "$repository_root"
 test_project_name="${project_name}.Tests"
 project_name_lower="$(printf '%s' "$project_name" | tr '[:upper:]' '[:lower:]')"
 target_solution="${solution_name}.slnx"
+target_workspace="${solution_name}.code-workspace"
 target_project_directory="src/${project_name}"
 target_test_directory="tests/${test_project_name}"
 
@@ -75,6 +78,7 @@ if [[ -f "$STATE_FILE" ]]; then
   [[ "$stored_solution" == "$solution_name" && "$stored_project" == "$project_name" ]] ||
     fail "the template was already initialized with different names"
   [[ -f "$target_solution" ]] || fail "the initialized solution is missing"
+  [[ -f "$target_workspace" ]] || fail "the initialized VS Code workspace is missing"
   [[ -f "$target_project_directory/${project_name}.csproj" ]] ||
     fail "the initialized application project is missing"
   [[ -f "$target_test_directory/${test_project_name}.csproj" ]] ||
@@ -85,9 +89,11 @@ if [[ -f "$STATE_FILE" ]]; then
 fi
 
 [[ -f "${ORIGINAL_SOLUTION_NAME}.slnx" ]] || fail "template solution was not found"
+[[ -f "$ORIGINAL_WORKSPACE_FILE" ]] || fail "template VS Code workspace was not found"
 [[ -d "src/${ORIGINAL_PROJECT_NAME}" ]] || fail "template application project was not found"
 [[ -d "tests/${ORIGINAL_PROJECT_NAME}.Tests" ]] || fail "template test project was not found"
 [[ ! -e "$target_solution" ]] || fail "$target_solution already exists"
+[[ ! -e "$target_workspace" ]] || fail "$target_workspace already exists"
 [[ ! -e "$target_project_directory" ]] || fail "$target_project_directory already exists"
 [[ ! -e "$target_test_directory" ]] || fail "$target_test_directory already exists"
 
@@ -114,6 +120,7 @@ readonly -a SOLUTION_REFERENCE_FILES=(
   ".github/workflows/ci.yml"
   ".vscode/settings.json"
   ".vscode/tasks.json"
+  "$ORIGINAL_WORKSPACE_FILE"
   "scripts/verify-environment.sh"
   "tests/Workspace.McpServer.Tests/ConfigurationTests.cs"
   "tests/Workspace.McpServer.Tests/McpServerIntegrationTests.cs"
@@ -132,6 +139,11 @@ readonly -a PROJECT_REFERENCE_FILES=(
   "evaluations/fixtures/greeting-whitespace-regression.patch"
 )
 
+readonly -a WORKSPACE_REFERENCE_FILES=(
+  "README.md"
+  "README.pt-BR.md"
+)
+
 for file in "${SOLUTION_REFERENCE_FILES[@]}"; do
   [[ -f "$file" ]] || fail "expected file is missing: $file"
   grep -Fq "$ORIGINAL_SOLUTION_NAME" "$file" ||
@@ -142,6 +154,12 @@ for file in "${PROJECT_REFERENCE_FILES[@]}"; do
   [[ -f "$file" ]] || fail "expected file is missing: $file"
   grep -Fq "$ORIGINAL_PROJECT_NAME" "$file" ||
     fail "expected value '$ORIGINAL_PROJECT_NAME' is missing from $file"
+done
+
+for file in "${WORKSPACE_REFERENCE_FILES[@]}"; do
+  [[ -f "$file" ]] || fail "expected file is missing: $file"
+  grep -Fq "$ORIGINAL_WORKSPACE_FILE" "$file" ||
+    fail "expected value '$ORIGINAL_WORKSPACE_FILE' is missing from $file"
 done
 
 [[ -f "tests/${ORIGINAL_PROJECT_NAME}.Tests/packages.lock.json" ]] ||
@@ -157,12 +175,20 @@ for file in "${PROJECT_REFERENCE_FILES[@]}"; do
   replace_literal "$file" "$ORIGINAL_PROJECT_NAME" "$PROJECT_NAME_PLACEHOLDER"
 done
 
+for file in "${WORKSPACE_REFERENCE_FILES[@]}"; do
+  replace_literal "$file" "$ORIGINAL_WORKSPACE_FILE" "$WORKSPACE_FILE_PLACEHOLDER"
+done
+
 for file in "${SOLUTION_REFERENCE_FILES[@]}"; do
   replace_literal "$file" "$SOLUTION_NAME_PLACEHOLDER" "$solution_name"
 done
 
 for file in "${PROJECT_REFERENCE_FILES[@]}"; do
   replace_literal "$file" "$PROJECT_NAME_PLACEHOLDER" "$project_name"
+done
+
+for file in "${WORKSPACE_REFERENCE_FILES[@]}"; do
+  replace_literal "$file" "$WORKSPACE_FILE_PLACEHOLDER" "$target_workspace"
 done
 
 replace_literal \
@@ -180,6 +206,7 @@ mv -- \
   "tests/${ORIGINAL_PROJECT_NAME}.Tests/${test_project_name}.csproj"
 mv -- "tests/${ORIGINAL_PROJECT_NAME}.Tests" "$target_test_directory"
 mv -- "${ORIGINAL_SOLUTION_NAME}.slnx" "$target_solution"
+mv -- "$ORIGINAL_WORKSPACE_FILE" "$target_workspace"
 
 printf 'solution_name=%s\nproject_name=%s\n' "$solution_name" "$project_name" > "$STATE_FILE"
 

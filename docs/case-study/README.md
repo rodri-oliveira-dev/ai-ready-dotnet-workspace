@@ -26,7 +26,7 @@ central package management, lock files, VS Code tasks, and CI converge on the sa
 commands. Repository scripts validate policy and create a disposable renamed copy.
 
 See the [component diagram and flows](../architecture.md) and the five
-[architecture decisions](../decisions/README.md).
+[architecture decisions](../adr/README.md).
 
 ## Decisions and trade-offs
 

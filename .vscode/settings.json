@@ -1,8 +1,19 @@
 {
   "dotnet.defaultSolution": "AiReadyWorkspace.slnx",
   "editor.formatOnSave": true,
+  "files.encoding": "utf8",
+  "files.eol": "\n",
   "files.exclude": {
     "**/bin": true,
-    "**/obj": true
+    "**/obj": true,
+    "**/TestResults": true,
+    "**/coverage": true
+  },
+  "adrGuard.validation.directory": "docs/adr",
+  "adrGuard.validation.adrFormat": "canonical",
+  "adrGuard.validation.onSave": false,
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp",
+    "editor.formatOnSave": true
   }
 }

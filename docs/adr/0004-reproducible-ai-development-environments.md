@@ -1,7 +1,12 @@
 # ADR-004: Reproducible AI development environments
 
-- Status: Accepted
-- Date: 2026-10-22
+## Status
+
+Accepted
+
+## Date
+
+2026-10-22
 
 ## Context
 

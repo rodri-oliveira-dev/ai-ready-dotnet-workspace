@@ -20,6 +20,8 @@ does not select an AI model, application database, or production cloud provider.
 Use the Dev Container, or install the local prerequisites, then run:
 
 ```bash
+dotnet tool restore
+dotnet tool run adr-guard -- check
 dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore
 dotnet test AiReadyWorkspace.slnx --configuration Release --no-build
@@ -53,6 +55,8 @@ authentication, workspace trust, or organization policy.
 - Central package versions, committed lock files, nullable analysis, warnings as
   errors, deterministic builds, and NuGet auditing.
 - Digest-pinned Dev Container, VS Code recommendations/tasks, and read-only CI.
+- Version-pinned ADR Guard governance through a local .NET tool, an immutable
+  GitHub Action, and an optional VS Code extension.
 - Shared `AGENTS.md`, scoped Copilot instructions, prompts, a specialized reviewer,
   and an on-demand validation skill.
 - A local stdio MCP server exposing only sanitized project metadata and architecture
@@ -60,7 +64,7 @@ authentication, workspace trust, or organization policy.
 - Security baseline, threat model, paired AI evaluation protocol, and isolated
   template initialization validation.
 
-See [Architecture](docs/architecture.md), [ADRs](docs/decisions/README.md), the
+See [Architecture](docs/architecture.md), [ADRs](docs/adr/README.md), the
 [case study](docs/case-study/README.md), and the [security policy](SECURITY.md).
 
 ## Repository structure
@@ -74,8 +78,59 @@ tools/Workspace.McpServer/        Read-only local MCP server
 .devcontainer/                    Reproducible development environment
 evaluations/                      Versioned scenarios and evidence contract
 scripts/                          Initialization and deterministic validation
-docs/                             Architecture, ADRs, security, and case study
+.config/dotnet-tools.json         Versioned local .NET tools
+docs/adr/                         Canonical architecture decision records
+docs/                             Architecture, security, and case study
 ```
+
+## Architecture governance with ADR Guard
+
+[ADR Guard](https://github.com/rodri-oliveira-dev/adr-guard) validates the
+canonical ADR collection in `docs/adr` according to `.adrguard.yml`. Restore the
+version-pinned [NuGet tool](https://www.nuget.org/packages/RodriOliveira.AdrGuard/1.9.0)
+and run the read-only check from the repository root:
+
+```bash
+dotnet tool restore
+dotnet tool run adr-guard -- --version
+dotnet tool run adr-guard -- check
+```
+
+The local CLI provides reproducible authoring and validation commands. The
+SHA-pinned GitHub Action runs the same `1.9.0` validation as the CI gate without
+AI services or extra tokens. The optional
+[VS Code extension](https://marketplace.visualstudio.com/items?itemName=rodrioliveira.adr-guard)
+adds editor navigation and diagnostics but does not bundle the CLI.
+
+Open `ai-ready-dotnet-workspace.code-workspace` directly to use the recommended
+extensions and the **ADR Guard: Restore Tool**, **ADR Guard: Check**, **ADR Guard:
+Index**, and **Workspace: Validate All** tasks. Index generation is explicit and
+is never run on save. The Dev Container restores the manifest automatically; run
+the same CLI commands in its terminal.
+
+```bash
+code ai-ready-dotnet-workspace.code-workspace
+```
+
+The extension looks for a standalone `adr-guard` executable on the local or
+remote extension host `PATH`; it does not discover manifest-only tools invoked by
+`dotnet tool run`. Its UI is optional, and every repository task works without a
+global installation. To enable the UI, install the same pinned package into a
+user-owned directory on the relevant host, add that directory to `PATH`, or set
+the machine-scoped `adrGuard.cli.path` in your personal VS Code settings:
+
+```bash
+dotnet tool install --tool-path "$HOME/.dotnet/tools" RodriOliveira.AdrGuard --version 1.9.0
+```
+
+Run that optional command inside a Dev Container, WSL, SSH host, or Codespace
+when the extension runs there; a host installation is not visible remotely. Do
+not commit a machine-specific executable path.
+
+To update ADR Guard, select a published version, update
+`.config/dotnet-tools.json`, the Action `version` input and its immutable `uses`
+SHA together, then restore, check `--version`, validate the ADRs, and run the full
+workspace validation. This keeps local and CI behavior aligned.
 
 ## Use this GitHub template
 
@@ -141,6 +196,8 @@ repository validation does not prove compatibility with every client or version.
 ## Build, test, validate, and evaluate
 
 ```bash
+dotnet tool restore
+dotnet tool run adr-guard -- check
 dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore

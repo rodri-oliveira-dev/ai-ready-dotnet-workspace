@@ -1,7 +1,12 @@
 # ADR-001: Shared and tool-specific AI instructions
 
-- Status: Accepted
-- Date: 2026-10-22
+## Status
+
+Accepted
+
+## Date
+
+2026-10-22
 
 ## Context
 

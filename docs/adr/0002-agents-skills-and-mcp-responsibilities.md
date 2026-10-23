@@ -1,7 +1,12 @@
 # ADR-002: Agents, skills and MCP responsibilities
 
-- Status: Accepted
-- Date: 2026-10-22
+## Status
+
+Accepted
+
+## Date
+
+2026-10-22
 
 ## Context
 
