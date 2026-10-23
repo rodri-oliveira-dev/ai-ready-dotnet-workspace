@@ -1,7 +1,12 @@
 # ADR-005: Deterministic validation and AI evaluations
 
-- Status: Accepted
-- Date: 2026-10-22
+## Status
+
+Accepted
+
+## Date
+
+2026-10-22
 
 ## Context
 

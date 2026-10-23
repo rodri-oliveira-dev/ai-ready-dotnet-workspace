@@ -12,11 +12,15 @@
     "vscode": {
       "extensions": [
         "ms-dotnettools.csdevkit",
-        "ms-dotnettools.csharp"
+        "ms-dotnettools.csharp",
+        "rodrioliveira.adr-guard"
       ],
       "settings": {
         "dotnet.defaultSolution": "AiReadyWorkspace.slnx",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "adrGuard.validation.directory": "docs/adr",
+        "adrGuard.validation.adrFormat": "canonical",
+        "adrGuard.validation.onSave": false
       }
     }
   }

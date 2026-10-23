@@ -2,35 +2,89 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "dotnet: restore",
+      "label": ".NET: Restore",
       "type": "process",
       "command": "dotnet",
       "args": ["restore", "AiReadyWorkspace.slnx", "--locked-mode"],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "dotnet: build",
+      "label": ".NET: Format",
       "type": "process",
       "command": "dotnet",
-      "args": ["build", "AiReadyWorkspace.slnx", "--no-restore"],
-      "dependsOn": "dotnet: restore",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
+      "args": ["format", "AiReadyWorkspace.slnx", "--verify-no-changes", "--no-restore"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": ".NET: Restore",
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "dotnet: test",
+      "label": ".NET: Build",
       "type": "process",
       "command": "dotnet",
-      "args": ["test", "AiReadyWorkspace.slnx", "--no-build"],
-      "dependsOn": "dotnet: build",
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
+      "args": ["build", "AiReadyWorkspace.slnx", "--configuration", "Release", "--no-restore"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": ".NET: Restore",
+      "group": { "kind": "build", "isDefault": true },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": ".NET: Test",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "AiReadyWorkspace.slnx", "--configuration", "Release", "--no-build"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": ".NET: Build",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "ADR Guard: Restore Tool",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["tool", "restore"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ADR Guard: Check",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["tool", "run", "adr-guard", "--", "check"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "ADR Guard: Restore Tool",
+      "problemMatcher": []
+    },
+    {
+      "label": "ADR Guard: Index",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["tool", "run", "adr-guard", "--", "index"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "ADR Guard: Restore Tool",
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Repository Checks",
+      "type": "process",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "./scripts/validate-ai-context.sh && ./scripts/validate-security.sh && ./scripts/validate-evaluations.sh && ./scripts/validate-template.sh"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Validate All",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        ".NET: Format",
+        ".NET: Test",
+        "ADR Guard: Check",
+        "Workspace: Repository Checks"
+      ],
+      "problemMatcher": []
     }
   ]
 }

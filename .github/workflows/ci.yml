@@ -10,6 +10,24 @@ permissions:
   contents: read
 
 jobs:
+  adr-validation:
+    name: ADR validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate ADRs
+        uses: rodri-oliveira-dev/adr-guard@8c6858a5bf2e2fc7dae36568ae06c60320cd71ac # v1.9.0
+        with:
+          path: docs/adr
+          command: check
+          version: 1.9.0
+
   build-and-test:
     name: Build and test
     runs-on: ubuntu-latest
@@ -25,6 +43,11 @@ jobs:
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+
+      - name: Restore local tools and verify ADR Guard
+        run: |
+          dotnet tool restore
+          test "$(dotnet tool run adr-guard -- --version)" = "1.9.0+8c6858a5bf2e2fc7dae36568ae06c60320cd71ac"
 
       - name: Validate repository configuration
         run: |

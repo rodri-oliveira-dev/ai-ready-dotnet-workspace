@@ -1,7 +1,12 @@
 # ADR-003: Security boundaries and tool permissions
 
-- Status: Accepted
-- Date: 2026-10-22
+## Status
+
+Accepted
+
+## Date
+
+2026-10-22
 
 ## Context
 

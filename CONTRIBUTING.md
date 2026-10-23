@@ -16,6 +16,8 @@ and safe to rename.
 Run the applicable checks from the repository root; for a full change use:
 
 ```bash
+dotnet tool restore
+dotnet tool run adr-guard -- check
 dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore

@@ -21,6 +21,8 @@ aplicação nem provedor de nuvem de produção.
 Use o Dev Container ou instale os requisitos locais e execute:
 
 ```bash
+dotnet tool restore
+dotnet tool run adr-guard -- check
 dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore
 dotnet test AiReadyWorkspace.slnx --configuration Release --no-build
@@ -54,6 +56,8 @@ autenticação, confiança no workspace ou políticas da organização.
 - Versões centralizadas, lockfiles, nullable, warnings como erros, build
   determinístico e auditoria NuGet.
 - Dev Container fixado por digest, tarefas do VS Code e CI somente leitura.
+- Governança com ADR Guard fixada por versão, usando ferramenta .NET local,
+  GitHub Action imutável e extensão VS Code opcional.
 - `AGENTS.md` compartilhado, instruções Copilot por escopo, prompts, agente de
   revisão especializado e skill de validação sob demanda.
 - Servidor MCP local por stdio que expõe apenas metadados sanitizados e regras de
@@ -61,8 +65,56 @@ autenticação, confiança no workspace ou políticas da organização.
 - Baseline de segurança, modelo de ameaças, protocolo de avaliação pareada e
   validação isolada da inicialização do template.
 
-Consulte [Arquitetura](docs/architecture.md), [ADRs](docs/decisions/README.md),
+Consulte [Arquitetura](docs/architecture.md), [ADRs](docs/adr/README.md),
 [estudo de caso](docs/case-study/README.md) e [política de segurança](SECURITY.md).
+
+## Governança arquitetural com ADR Guard
+
+O [ADR Guard](https://github.com/rodri-oliveira-dev/adr-guard) valida a coleção
+canônica em `docs/adr` conforme `.adrguard.yml`. Restaure a
+[ferramenta NuGet](https://www.nuget.org/packages/RodriOliveira.AdrGuard/1.9.0),
+fixada por versão, e execute a validação somente leitura na raiz:
+
+```bash
+dotnet tool restore
+dotnet tool run adr-guard -- --version
+dotnet tool run adr-guard -- check
+```
+
+A CLI local fornece comandos reprodutíveis de autoria e validação. A GitHub
+Action fixada por SHA executa a mesma versão `1.9.0` como gate do CI, sem IA,
+tokens adicionais ou serviços pagos. A
+[extensão VS Code](https://marketplace.visualstudio.com/items?itemName=rodrioliveira.adr-guard)
+é opcional e acrescenta navegação e diagnósticos, mas não inclui a CLI.
+
+Abra `ai-ready-dotnet-workspace.code-workspace` para usar as extensões
+recomendadas e as tasks **ADR Guard: Restore Tool**, **ADR Guard: Check**, **ADR
+Guard: Index** e **Workspace: Validate All**. A geração do índice é sempre
+explícita e nunca ocorre ao salvar. O Dev Container restaura o manifesto
+automaticamente; execute os mesmos comandos da CLI em seu terminal.
+
+```bash
+code ai-ready-dotnet-workspace.code-workspace
+```
+
+A extensão procura um executável independente `adr-guard` no `PATH` do host local
+ou remoto da extensão; ela não descobre automaticamente ferramentas disponíveis
+somente por `dotnet tool run`. A interface é opcional, e nenhuma task exige
+instalação global. Para habilitá-la, instale a mesma versão em um diretório do
+usuário no host correto, adicione-o ao `PATH` ou configure `adrGuard.cli.path` no
+escopo de máquina das suas configurações pessoais do VS Code:
+
+```bash
+dotnet tool install --tool-path "$HOME/.dotnet/tools" RodriOliveira.AdrGuard --version 1.9.0
+```
+
+Execute esse comando opcional dentro do Dev Container, WSL, host SSH ou Codespace
+quando a extensão estiver remota. Não versione um caminho absoluto da máquina.
+
+Para atualizar o ADR Guard, escolha uma versão publicada e atualize em conjunto
+`.config/dotnet-tools.json`, o input `version` da Action e o SHA imutável em
+`uses`. Depois restaure a ferramenta, confira `--version`, valide os ADRs e rode
+toda a validação do workspace para manter CLI e CI sincronizados.
 
 ## Usar como template no GitHub
 
@@ -124,6 +176,8 @@ compatibilidade com todos os clientes e versões.
 ## Build, testes e avaliações
 
 ```bash
+dotnet tool restore
+dotnet tool run adr-guard -- check
 dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet format AiReadyWorkspace.slnx --verify-no-changes --no-restore
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore

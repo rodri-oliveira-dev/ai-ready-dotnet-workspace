@@ -18,6 +18,7 @@ flowchart LR
     Dev --> API[SampleApi]
     Dev --> Tests[Application and MCP tests]
     Scripts[Validation scripts] --> Context
+    ADRGuard[ADR Guard CLI and Action] --> ADRs[Canonical ADRs]
     Scripts --> Tests
     Scripts --> Derived[Isolated initialized copy]
     GitHub[GitHub Actions] --> Scripts
@@ -38,7 +39,8 @@ tool, and external content remain untrusted inputs.
 | `tests/Workspace.McpServer.Tests` | Verifies configuration, path containment, sanitization, annotations, and protocol behavior. | Uses temporary local workspaces and does not authorize broader capabilities. |
 | AI context files | Describe shared policy, scoped guidance, roles, prompts, and procedures. | Guidance does not itself enforce sandboxing or approvals. |
 | Dev Container and VS Code | Provide a consistent SDK and equivalent restore/build/test entry points. | The mounted workspace is writable; host and container runtime remain trusted externally. |
-| Scripts and CI | Validate structure, security invariants, evaluations, .NET behavior, and a renamed copy. | CI has read-only repository permission and no baseline secrets. |
+| ADR Guard | Validates the canonical `docs/adr` collection locally through the versioned tool manifest and in CI through a SHA-pinned Action. | Deterministic `check` only in CI; no AI providers, credentials, review, draft, or implicit index writes. |
+| Scripts and CI | Validate structure, security invariants, ADRs, evaluations, .NET behavior, and a renamed copy. | CI has read-only repository permission and no baseline secrets. |
 | Evaluations | Define paired scenarios and an evidence schema. | Structural validation is not a real model run. |
 
 ## Assisted-development flows
@@ -52,6 +54,18 @@ tool, and external content remain untrusted inputs.
 4. `validate-change` selects the relevant repository-owned commands.
 5. The human reviews the diff and evidence before any commit or remote operation.
 6. CI repeats the deterministic checks on a pull request.
+
+### Architecture decision governance
+
+1. ADRs use the canonical format and filename policy configured in
+   `.adrguard.yml`, under the single `docs/adr` directory.
+2. Developers restore `RodriOliveira.AdrGuard` from the root tool manifest and
+   run `dotnet tool run adr-guard -- check`; index generation remains explicit.
+3. The optional VS Code extension reads the same directory and format settings.
+   Its executable discovery is an editor-host concern and does not replace the
+   repository's local tool manifest.
+4. CI uses the official Action pinned to the release commit and exact CLI image
+   version, with read-only contents permission and deterministic `check` only.
 
 ### Read-only architecture review
 
@@ -75,6 +89,8 @@ tool, and external content remain untrusted inputs.
 - The .NET SDK is selected by `global.json`; NuGet dependencies are centrally
   versioned and locked per project.
 - The Dev Container image and GitHub Actions are pinned by immutable digest or SHA.
+- ADR Guard CLI `1.9.0` is pinned in `.config/dotnet-tools.json`; the matching
+  official Action is pinned by release SHA and receives the exact version input.
 - GitHub hosts source, pull requests, Actions, Dependabot, and template settings;
   branch and organization controls are not stored in this repository.
 - Copilot and Codex are optional clients. Their authentication, model service,
@@ -82,5 +98,5 @@ tool, and external content remain untrusted inputs.
 - The Model Context Protocol C# SDK provides the local stdio transport. The checked-in
   MCP server itself performs no network access.
 
-The reasoning behind these boundaries is recorded in [ADRs](decisions/README.md),
+The reasoning behind these boundaries is recorded in [ADRs](adr/README.md),
 and abuse cases are covered by the [threat model](security/threat-model.md).

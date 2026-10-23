@@ -19,6 +19,8 @@ fi
 
 echo "Using .NET SDK $sdk_version"
 git --version
+dotnet tool restore
+dotnet tool run adr-guard -- check
 dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore
 dotnet test AiReadyWorkspace.slnx --configuration Release --no-build --logger "console;verbosity=normal"

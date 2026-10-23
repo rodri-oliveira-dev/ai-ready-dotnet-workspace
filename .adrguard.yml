@@ -1,0 +1,6 @@
+schema-version: 1
+adr-directory: "docs/adr"
+template: minimal
+adr-format: canonical
+filename-policy: canonical
+validation-profile: standard
