@@ -6,9 +6,14 @@ namespace Workspace.McpServer;
 public sealed class WorkspaceReader(WorkspacePathPolicy pathPolicy)
 {
     private const int MaximumProjects = 200;
+    private const int MaximumMetadataItems = 50;
+    private const int MaximumMetadataValueLength = 200;
+    private const long MaximumCatalogCharacters = 256 * 1024;
     private const long MaximumInstructionBytes = 128 * 1024;
+    private const long MaximumProjectBytes = 256 * 1024;
 
-    public ProjectCatalog ListDotNetProjects()
+    public async Task<ProjectCatalog> ListDotNetProjectsAsync(
+        CancellationToken cancellationToken)
     {
         var enumerationOptions = new EnumerationOptions
         {
@@ -19,26 +24,45 @@ public sealed class WorkspaceReader(WorkspacePathPolicy pathPolicy)
             MatchCasing = MatchCasing.PlatformDefault
         };
 
-        var projectPaths = Directory
-            .EnumerateFiles(pathPolicy.RootPath, "*.csproj", enumerationOptions)
-            .Take(MaximumProjects + 1)
-            .ToArray();
-
-        if (projectPaths.Length > MaximumProjects)
+        var projectPaths = new List<string>(MaximumProjects);
+        foreach (var projectPath in Directory.EnumerateFiles(
+                     pathPolicy.RootPath,
+                     "*.csproj",
+                     enumerationOptions))
         {
-            throw new InvalidOperationException(
-                $"The workspace contains more than {MaximumProjects} projects.");
+            cancellationToken.ThrowIfCancellationRequested();
+            projectPaths.Add(projectPath);
+            if (projectPaths.Count > MaximumProjects)
+            {
+                throw new InvalidOperationException(
+                    $"The workspace contains more than {MaximumProjects} projects.");
+            }
         }
 
-        var projects = projectPaths
-            .Select(ReadProject)
+        long catalogCharacters = 0;
+        var projects = new List<ProjectInfo>(projectPaths.Count);
+        foreach (var projectPath in projectPaths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var project = await ReadProjectAsync(projectPath, cancellationToken);
+            catalogCharacters = checked(catalogCharacters + MeasureCharacters(project));
+            if (catalogCharacters > MaximumCatalogCharacters)
+            {
+                throw new InvalidOperationException("The workspace project catalog is too large.");
+            }
+
+            projects.Add(project);
+        }
+
+        var orderedProjects = projects
             .OrderBy(project => project.RelativePath, StringComparer.Ordinal)
             .ToArray();
 
-        return new ProjectCatalog(projects);
+        return new ProjectCatalog(orderedProjects);
     }
 
-    public ArchitectureRules GetArchitectureRules()
+    public async Task<ArchitectureRules> GetArchitectureRulesAsync(
+        CancellationToken cancellationToken)
     {
         var agentsPath = pathPolicy.ResolveReadableFile("AGENTS.md");
         if (new FileInfo(agentsPath).Length > MaximumInstructionBytes)
@@ -49,7 +73,16 @@ public sealed class WorkspaceReader(WorkspacePathPolicy pathPolicy)
         var rules = new List<string>();
         var inSection = false;
 
-        foreach (var line in File.ReadLines(agentsPath))
+        await using var stream = new FileStream(
+            agentsPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 4096,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var reader = new StreamReader(stream);
+
+        while (await reader.ReadLineAsync(cancellationToken) is { } line)
         {
             if (line.Equals("## Layer responsibilities", StringComparison.Ordinal))
             {
@@ -71,25 +104,38 @@ public sealed class WorkspaceReader(WorkspacePathPolicy pathPolicy)
         return new ArchitectureRules("AGENTS.md", rules);
     }
 
-    private ProjectInfo ReadProject(string projectPath)
+    private async Task<ProjectInfo> ReadProjectAsync(
+        string projectPath,
+        CancellationToken cancellationToken)
     {
         var safeProjectPath = pathPolicy.ResolveReadableFile(
             pathPolicy.ToWorkspaceRelativePath(projectPath));
+        if (new FileInfo(safeProjectPath).Length > MaximumProjectBytes)
+        {
+            throw new InvalidDataException("The project file exceeds the safe read limit.");
+        }
+
         var settings = new XmlReaderSettings
         {
+            Async = true,
             DtdProcessing = DtdProcessing.Prohibit,
             XmlResolver = null,
-            MaxCharactersInDocument = 1024 * 1024
+            MaxCharactersInDocument = MaximumProjectBytes
         };
 
         using var xmlReader = XmlReader.Create(safeProjectPath, settings);
-        var document = XDocument.Load(xmlReader, LoadOptions.None);
+        var document = await XDocument.LoadAsync(
+            xmlReader,
+            LoadOptions.None,
+            cancellationToken);
         var root = document.Root ?? throw new InvalidDataException("Project XML has no root element.");
+        var sdk = root.Attribute("Sdk")?.Value ?? string.Empty;
+        EnsureMetadataValueIsBounded(sdk);
 
         return new ProjectInfo(
             Path.GetFileNameWithoutExtension(safeProjectPath),
             pathPolicy.ToWorkspaceRelativePath(safeProjectPath),
-            root.Attribute("Sdk")?.Value ?? string.Empty,
+            sdk,
             ReadValues(document, "TargetFramework", "TargetFrameworks"),
             ReadIncludes(document, "PackageReference"),
             ReadIncludes(document, "ProjectReference")
@@ -100,27 +146,56 @@ public sealed class WorkspaceReader(WorkspacePathPolicy pathPolicy)
     }
 
     private static string[] ReadValues(XDocument document, params string[] names) =>
-        document
+        ReadBoundedMetadata(document
             .Descendants()
             .Where(element => names.Contains(element.Name.LocalName, StringComparer.Ordinal))
             .SelectMany(element => element.Value.Split(';', StringSplitOptions.RemoveEmptyEntries |
                                                                StringSplitOptions.TrimEntries))
-            .Where(value => value.Length <= 100)
-            .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
+            .Distinct(StringComparer.Ordinal), StringComparer.Ordinal);
 
     private static string[] ReadIncludes(XDocument document, string itemName) =>
-        document
+        ReadBoundedMetadata(document
             .Descendants()
             .Where(element => element.Name.LocalName == itemName)
             .Select(element => element.Attribute("Include")?.Value ??
                                element.Attribute("Update")?.Value)
-            .Where(value => !string.IsNullOrWhiteSpace(value) && value.Length <= 200)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
             .Cast<string>()
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Order(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+            .Distinct(StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+
+    private static string[] ReadBoundedMetadata(
+        IEnumerable<string> values,
+        StringComparer comparer)
+    {
+        var boundedValues = values.Take(MaximumMetadataItems + 1).ToArray();
+        if (boundedValues.Length > MaximumMetadataItems)
+        {
+            throw new InvalidDataException("Project metadata contains too many values.");
+        }
+
+        foreach (var value in boundedValues)
+        {
+            EnsureMetadataValueIsBounded(value);
+        }
+
+        return boundedValues.Order(comparer).ToArray();
+    }
+
+    private static void EnsureMetadataValueIsBounded(string value)
+    {
+        if (value.Length > MaximumMetadataValueLength)
+        {
+            throw new InvalidDataException("Project metadata exceeds the safe value limit.");
+        }
+    }
+
+    private static long MeasureCharacters(ProjectInfo project) =>
+        project.Name.Length +
+        project.RelativePath.Length +
+        project.Sdk.Length +
+        project.TargetFrameworks.Sum(value => value.Length) +
+        project.PackageReferences.Sum(value => value.Length) +
+        project.ProjectReferences.Sum(value => value.Length);
 }
 
 public sealed record ProjectCatalog(IReadOnlyList<ProjectInfo> Projects);

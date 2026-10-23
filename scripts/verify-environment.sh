@@ -19,7 +19,7 @@ fi
 
 echo "Using .NET SDK $sdk_version"
 git --version
-dotnet restore AiReadyWorkspace.slnx
+dotnet restore AiReadyWorkspace.slnx --locked-mode
 dotnet build AiReadyWorkspace.slnx --configuration Release --no-restore
 dotnet test AiReadyWorkspace.slnx --configuration Release --no-build --logger "console;verbosity=normal"
 

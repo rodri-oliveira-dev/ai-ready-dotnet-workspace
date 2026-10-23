@@ -5,6 +5,12 @@ namespace Workspace.McpServer.Tests;
 
 public sealed class McpServerIntegrationTests
 {
+#if DEBUG
+    private const string BuildConfiguration = "Debug";
+#else
+    private const string BuildConfiguration = "Release";
+#endif
+
     [Fact]
     public async Task StdioClientListsAndInvokesReadOnlyTools()
     {
@@ -19,7 +25,7 @@ public sealed class McpServerIntegrationTests
                 "--project",
                 "tools/Workspace.McpServer/Workspace.McpServer.csproj",
                 "--configuration",
-                "Release",
+                BuildConfiguration,
                 "--no-build",
                 "--",
                 "--workspace",

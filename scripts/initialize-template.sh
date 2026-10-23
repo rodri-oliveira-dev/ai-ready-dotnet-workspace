@@ -5,6 +5,8 @@ set -euo pipefail
 readonly ORIGINAL_SOLUTION_NAME="AiReadyWorkspace"
 readonly ORIGINAL_PROJECT_NAME="SampleApi"
 readonly STATE_FILE=".template-initialized"
+readonly SOLUTION_NAME_PLACEHOLDER="__AI_READY_SOLUTION_NAME__"
+readonly PROJECT_NAME_PLACEHOLDER="__AI_READY_PROJECT_NAME__"
 
 fail() {
   printf 'Template initialization failed: %s\n' "$1" >&2
@@ -148,11 +150,19 @@ grep -Fq "sampleapi" "tests/${ORIGINAL_PROJECT_NAME}.Tests/packages.lock.json" |
   fail "test project lockfile does not contain the expected project reference"
 
 for file in "${SOLUTION_REFERENCE_FILES[@]}"; do
-  replace_literal "$file" "$ORIGINAL_SOLUTION_NAME" "$solution_name"
+  replace_literal "$file" "$ORIGINAL_SOLUTION_NAME" "$SOLUTION_NAME_PLACEHOLDER"
 done
 
 for file in "${PROJECT_REFERENCE_FILES[@]}"; do
-  replace_literal "$file" "$ORIGINAL_PROJECT_NAME" "$project_name"
+  replace_literal "$file" "$ORIGINAL_PROJECT_NAME" "$PROJECT_NAME_PLACEHOLDER"
+done
+
+for file in "${SOLUTION_REFERENCE_FILES[@]}"; do
+  replace_literal "$file" "$SOLUTION_NAME_PLACEHOLDER" "$solution_name"
+done
+
+for file in "${PROJECT_REFERENCE_FILES[@]}"; do
+  replace_literal "$file" "$PROJECT_NAME_PLACEHOLDER" "$project_name"
 done
 
 replace_literal \

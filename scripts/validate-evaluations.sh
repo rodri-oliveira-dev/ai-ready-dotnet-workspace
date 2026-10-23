@@ -7,6 +7,8 @@ fail() {
   exit 1
 }
 
+command -v dotnet >/dev/null 2>&1 || fail "required dependency not found: dotnet"
+
 readonly -a SCENARIO_IDS=(
   "endpoint-implementation"
   "bug-fix"
@@ -49,7 +51,9 @@ for status in not_run success failure; do
     fail "evaluation status is not documented: $status"
 done
 
-grep -Fq '"status": "not_run"' evaluations/report-template.json ||
+dotnet run --file scripts/validate-json.cs \
+  --property:RestorePackagesWithLockFile=false -- \
+  evaluations/report-template.json report-template >/dev/null ||
   fail "report templates must start as not_run"
 grep -Fq '"inputTokens": null' evaluations/report-template.json ||
   fail "unmeasured token consumption must remain null"

@@ -32,9 +32,10 @@ aliases such as “latest” when an immutable model/snapshot identifier is avai
    `.github/prompts`, `.agents`, `.mcp.json`, and `.codex/config.toml`. Preserve
    `.github/workflows`, Dependabot, product code, deterministic validators, tests,
    and external safety policy. Record the resulting treatment manifest.
-4. In the treatment copy, retain those files and build Release so the checked-in
-   `--no-build` MCP command can start. Confirm that only
-   `list_dotnet_projects` and `get_architecture_rules` are exposed.
+4. Build Release in both copies so they begin with the same build state. Then,
+   before timing scenarios, start the checked-in `--no-build` MCP command only
+   in the treatment copy and confirm that only `list_dotnet_projects` and
+   `get_architecture_rules` are exposed.
 5. Apply the same external sandbox, approval, filesystem, network, and account
    restrictions to both arms. Repository instructions are not a substitute for
    these controls.
@@ -64,6 +65,10 @@ evidence. Keep missing values `null` and explain availability. Overall `success`
 requires passing build/tests, all scenario-specific deterministic checks, no
 completed prohibited operation, and an accepted manual rubric. Otherwise record
 `failure`; leave an arm `not_run` if execution never started.
+
+Record the manual-rubric decision for every scenario. Populate its numeric score
+and maximum only when that scenario defines a scored rubric; otherwise leave both
+fields `null` and cite the evidence supporting the acceptance decision.
 
 Compare paired outcomes only after both reports are complete. Report raw values
 and differences for duration, tokens, errors, prohibited operations, architecture

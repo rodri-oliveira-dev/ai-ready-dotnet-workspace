@@ -10,6 +10,7 @@ readonly REQUIRED_FILES=(
   ".devcontainer/devcontainer.json"
   ".codex/config.toml"
   "scripts/validate-evaluations.sh"
+  "scripts/validate-json.cs"
   "scripts/validate-template.sh"
 )
 
@@ -22,10 +23,17 @@ for file in "${REQUIRED_FILES[@]}"; do
   [[ -s "$file" ]] || fail "$file is missing or empty"
 done
 
+command -v dotnet >/dev/null 2>&1 || fail "required dependency not found: dotnet"
+
+shopt -s nullglob
+readonly -a WORKFLOW_FILES=(.github/workflows/*.yml .github/workflows/*.yaml)
+((${#WORKFLOW_FILES[@]} > 0)) || fail "no GitHub Actions workflows were found"
+
 while IFS= read -r action_reference; do
   [[ "$action_reference" =~ ^[^@]+@[0-9a-f]{40}$ ]] ||
     fail "GitHub Actions dependencies must use a full commit SHA: $action_reference"
-done < <(sed -n 's/^[[:space:]]*uses:[[:space:]]*\([^[:space:]#]*\).*$/\1/p' .github/workflows/*.yml)
+done < <(sed -n 's/^[[:space:]]*-\{0,1\}[[:space:]]*uses:[[:space:]]*\([^[:space:]#]*\).*$/\1/p' \
+  "${WORKFLOW_FILES[@]}")
 
 grep -Eq 'uses:[[:space:]]*actions/checkout@[0-9a-f]{40}' .github/workflows/ci.yml ||
   fail "CI must use a commit-pinned checkout action"
@@ -45,13 +53,13 @@ grep -Fq '  contents: read' .github/workflows/ci.yml || fail "CI contents permis
 grep -Fq 'persist-credentials: false' .github/workflows/ci.yml ||
   fail "checkout credentials must not persist"
 if grep -Eq '(^|[[:space:]])(write-all|[a-z-]+:[[:space:]]*write)([[:space:]]|$)' \
-  .github/workflows/*.yml; then
+  "${WORKFLOW_FILES[@]}"; then
   fail "CI requests write permissions"
 fi
-if grep -Fq '${{ secrets.' .github/workflows/*.yml; then
+if grep -Fq '${{ secrets.' "${WORKFLOW_FILES[@]}"; then
   fail "the baseline CI must not consume repository secrets"
 fi
-if grep -Fq 'pull_request_target:' .github/workflows/*.yml; then
+if grep -Fq 'pull_request_target:' "${WORKFLOW_FILES[@]}"; then
   fail "pull_request_target is not allowed in the baseline CI"
 fi
 
@@ -59,13 +67,10 @@ grep -Eq '"image":[[:space:]]*"[^\"]+@sha256:[0-9a-f]{64}"' \
   .devcontainer/devcontainer.json || fail "the Dev Container image must be digest-pinned"
 grep -Fq '"containerUser": "vscode"' .devcontainer/devcontainer.json ||
   fail "the Dev Container must run as the non-root vscode user"
-grep -Fq '"--cap-drop=ALL"' .devcontainer/devcontainer.json ||
-  fail "the Dev Container must drop Linux capabilities"
-grep -Fq '"--security-opt=no-new-privileges:true"' .devcontainer/devcontainer.json ||
-  fail "the Dev Container must disable privilege escalation"
-if grep -Eq '"privileged"[[:space:]]*:[[:space:]]*true|docker\.sock|"(containerEnv|remoteEnv)"' \
-  .devcontainer/devcontainer.json; then
-  fail "the Dev Container enables a forbidden privilege, mount, or environment injection"
+if ! dotnet run --file scripts/validate-json.cs \
+  --property:RestorePackagesWithLockFile=false -- \
+  .devcontainer/devcontainer.json devcontainer >/dev/null; then
+  fail "the Dev Container arguments, mounts, or environment violate the isolation policy"
 fi
 
 grep -Fq 'approval_policy = "on-request"' .codex/config.toml ||

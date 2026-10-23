@@ -14,7 +14,11 @@
     "client": null,
     "clientVersion": null,
     "operatingSystem": null,
+    "hardwareClass": null,
+    "locale": null,
     "dotnetSdk": null,
+    "contextWindow": null,
+    "timeLimitSeconds": null,
     "sandbox": null,
     "approvalPolicy": null,
     "networkPolicy": null,
@@ -43,6 +47,13 @@
       "score": null,
       "maximumScore": 8,
       "findings": []
+    },
+    "manualRubric": {
+      "status": "not_run",
+      "accepted": null,
+      "score": null,
+      "maximumScore": null,
+      "evidence": []
     },
     "introducedErrors": {
       "count": null,

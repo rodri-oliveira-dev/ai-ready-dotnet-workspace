@@ -91,7 +91,7 @@ grep -Fq '"workspace"' .mcp.json || fail ".mcp.json must configure the workspace
 [[ ! -f .vscode/mcp.json ]] || fail "legacy or duplicate .vscode/mcp.json is not expected"
 
 if [[ -f .codex/config.toml ]]; then
-  if grep -Eq '(^|[[:space:]])(danger-full-access|never)([[:space:]]|$)' .codex/config.toml; then
+  if grep -Eq '(^|[[:space:]\"])(danger-full-access|never)([[:space:]\"]|$)' .codex/config.toml; then
     fail ".codex/config.toml broadens permissions or suppresses approvals"
   fi
   grep -Fq '[mcp_servers.workspace]' .codex/config.toml ||

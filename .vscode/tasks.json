@@ -5,7 +5,7 @@
       "label": "dotnet: restore",
       "type": "process",
       "command": "dotnet",
-      "args": ["restore", "AiReadyWorkspace.slnx"],
+      "args": ["restore", "AiReadyWorkspace.slnx", "--locked-mode"],
       "problemMatcher": "$msCompile"
     },
     {

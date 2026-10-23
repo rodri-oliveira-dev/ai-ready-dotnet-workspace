@@ -4,13 +4,65 @@ set -euo pipefail
 
 readonly DERIVED_SOLUTION_NAME="TemplateValidation"
 readonly DERIVED_PROJECT_NAME="TemplateValidation.Api"
+readonly -a RESIDUAL_SCAN_TARGETS=(
+  "src"
+  "tests"
+  ".agents"
+  ".codex"
+  ".devcontainer"
+  ".github"
+  ".vscode"
+  "docs"
+  "evaluations"
+  "AGENTS.md"
+  "CONTRIBUTING.md"
+  "README.md"
+  "README.pt-BR.md"
+  "scripts/verify-environment.sh"
+)
 
 fail() {
   printf 'Template validation failed: %s\n' "$1" >&2
   exit 1
 }
 
-for dependency in dotnet git tar grep; do
+assert_no_residual_template_names() {
+  local selected_solution_name="$1"
+  local selected_project_name="$2"
+  local file
+  local residual_found=false
+
+  while IFS= read -r -d '' file; do
+    if awk \
+      -v solution="$selected_solution_name" \
+      -v project="$selected_project_name" \
+      -v filename="$file" '
+        function remove_literal(text, literal, position) {
+          while ((position = index(text, literal)) > 0) {
+            text = substr(text, 1, position - 1) substr(text, position + length(literal))
+          }
+          return text
+        }
+        {
+          remaining = remove_literal($0, solution)
+          remaining = remove_literal(remaining, project)
+          if (index(remaining, "AiReadyWorkspace") || index(remaining, "SampleApi")) {
+            print filename ":" NR ":" $0
+            found = 1
+          }
+        }
+        END { exit found ? 0 : 1 }
+      ' "$file"; then
+      residual_found=true
+    fi
+  done < <(grep -RIlZ -F -e "AiReadyWorkspace" -e "SampleApi" \
+    "${RESIDUAL_SCAN_TARGETS[@]}" || true)
+
+  [[ "$residual_found" == false ]] ||
+    fail "derived repository contains residual template names"
+}
+
+for dependency in dotnet git tar grep awk; do
   command -v "$dependency" >/dev/null 2>&1 || fail "required dependency not found: $dependency"
 done
 
@@ -20,6 +72,7 @@ cd "$repository_root"
 temporary_base="${TMPDIR:-/tmp}"
 temporary_root="$(mktemp -d "${temporary_base%/}/ai-ready-template-validation.XXXXXX")"
 derived_root="$temporary_root/derived"
+collision_root="$temporary_root/collision"
 status_before="$temporary_root/original-status.before"
 
 cleanup() {
@@ -35,11 +88,33 @@ cleanup() {
 trap cleanup EXIT
 
 git status --porcelain=v1 --untracked-files=all > "$status_before"
-mkdir -p "$derived_root"
+mkdir -p "$derived_root" "$collision_root"
 
 git ls-files --cached --others --exclude-standard -z |
   tar --null --files-from=- -cf - |
   tar -xf - -C "$derived_root"
+
+git ls-files --cached --others --exclude-standard -z |
+  tar --null --files-from=- -cf - |
+  tar -xf - -C "$collision_root"
+
+(
+  cd "$collision_root"
+
+  ./scripts/initialize-template.sh \
+    --solution-name "SampleApiWorkspace" \
+    --project-name "SampleApiV2"
+
+  [[ -f "SampleApiWorkspace.slnx" ]] || fail "collision-case solution is missing"
+  grep -Fq "SampleApiWorkspace.slnx" README.md ||
+    fail "project replacement corrupted the solution name"
+  if grep -R -n -F "SampleApiV2Workspace.slnx" \
+    README.md README.pt-BR.md CONTRIBUTING.md .agents .devcontainer .github .vscode; then
+    fail "project replacement rewrote part of the solution name"
+  fi
+
+  assert_no_residual_template_names "SampleApiWorkspace" "SampleApiV2"
+)
 
 (
   cd "$derived_root"
@@ -75,27 +150,7 @@ git ls-files --cached --others --exclude-standard -z |
   [[ ! -e "src/SampleApi" ]] || fail "original application directory remains"
   [[ ! -e "tests/SampleApi.Tests" ]] || fail "original test directory remains"
 
-  readonly -a RESIDUAL_SCAN_TARGETS=(
-    "src"
-    "tests"
-    ".agents"
-    ".codex"
-    ".devcontainer"
-    ".github"
-    ".vscode"
-    "docs"
-    "evaluations"
-    "AGENTS.md"
-    "CONTRIBUTING.md"
-    "README.md"
-    "README.pt-BR.md"
-    "scripts/verify-environment.sh"
-  )
-
-  if grep -R -n -F -e "AiReadyWorkspace" -e "SampleApi" \
-    "${RESIDUAL_SCAN_TARGETS[@]}"; then
-    fail "derived repository contains residual template names"
-  fi
+  assert_no_residual_template_names "$validation_solution_name" "$validation_project_name"
 
   dotnet restore "${validation_solution_name}.slnx" --locked-mode
   dotnet format "${validation_solution_name}.slnx" --verify-no-changes --no-restore

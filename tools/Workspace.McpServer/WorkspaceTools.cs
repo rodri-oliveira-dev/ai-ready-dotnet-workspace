@@ -15,9 +15,11 @@ public sealed class WorkspaceTools(WorkspaceReader workspaceReader)
         OpenWorld = false,
         UseStructuredContent = true)]
     [Description("Lists sanitized .NET project metadata inside the authorized workspace.")]
-    public ProjectCatalog ListDotNetProjects() => ExecuteSafely(
-        workspaceReader.ListDotNetProjects,
-        "The workspace project catalog could not be read safely.");
+    public Task<ProjectCatalog> ListDotNetProjects(CancellationToken cancellationToken) =>
+        ExecuteSafelyAsync(
+            workspaceReader.ListDotNetProjectsAsync,
+            "The workspace project catalog could not be read safely.",
+            cancellationToken);
 
     [McpServerTool(
         Name = "get_architecture_rules",
@@ -28,15 +30,20 @@ public sealed class WorkspaceTools(WorkspaceReader workspaceReader)
         OpenWorld = false,
         UseStructuredContent = true)]
     [Description("Returns only the architecture responsibility section from the workspace AGENTS.md.")]
-    public ArchitectureRules GetArchitectureRules() => ExecuteSafely(
-        workspaceReader.GetArchitectureRules,
-        "The workspace architecture rules could not be read safely.");
+    public Task<ArchitectureRules> GetArchitectureRules(CancellationToken cancellationToken) =>
+        ExecuteSafelyAsync(
+            workspaceReader.GetArchitectureRulesAsync,
+            "The workspace architecture rules could not be read safely.",
+            cancellationToken);
 
-    private static TResult ExecuteSafely<TResult>(Func<TResult> operation, string safeErrorMessage)
+    private static async Task<TResult> ExecuteSafelyAsync<TResult>(
+        Func<CancellationToken, Task<TResult>> operation,
+        string safeErrorMessage,
+        CancellationToken cancellationToken)
     {
         try
         {
-            return operation();
+            return await operation(cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
