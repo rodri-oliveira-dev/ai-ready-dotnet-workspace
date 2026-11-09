@@ -22,11 +22,11 @@ jobs:
           persist-credentials: false
 
       - name: Validate ADRs
-        uses: rodri-oliveira-dev/adr-guard@8c6858a5bf2e2fc7dae36568ae06c60320cd71ac # v1.9.0
+        uses: rodri-oliveira-dev/adr-guard@ef132507ff3fda22db2128354086cee53b832fb1 # v1.11.0
         with:
           path: docs/adr
           command: check
-          version: 1.9.0
+          version: 1.11.0
 
   build-and-test:
     name: Build and test
@@ -47,7 +47,7 @@ jobs:
       - name: Restore local tools and verify ADR Guard
         run: |
           dotnet tool restore
-          test "$(dotnet tool run adr-guard -- --version)" = "1.9.0+8c6858a5bf2e2fc7dae36568ae06c60320cd71ac"
+          test "$(dotnet tool run adr-guard -- --version)" = "1.11.0+ef132507ff3fda22db2128354086cee53b832fb1"
 
       - name: Validate repository configuration
         run: |
