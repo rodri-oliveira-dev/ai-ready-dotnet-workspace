@@ -87,7 +87,7 @@ docs/                             Architecture, security, and case study
 
 [ADR Guard](https://github.com/rodri-oliveira-dev/adr-guard) validates the
 canonical ADR collection in `docs/adr` according to `.adrguard.yml`. Restore the
-version-pinned [NuGet tool](https://www.nuget.org/packages/RodriOliveira.AdrGuard/1.9.0)
+version-pinned [NuGet tool](https://www.nuget.org/packages/RodriOliveira.AdrGuard/1.11.0)
 and run the read-only check from the repository root:
 
 ```bash
@@ -97,7 +97,7 @@ dotnet tool run adr-guard -- check
 ```
 
 The local CLI provides reproducible authoring and validation commands. The
-SHA-pinned GitHub Action runs the same `1.9.0` validation as the CI gate without
+SHA-pinned GitHub Action runs the same `1.11.0` validation as the CI gate without
 AI services or extra tokens. The optional
 [VS Code extension](https://marketplace.visualstudio.com/items?itemName=rodrioliveira.adr-guard)
 adds editor navigation and diagnostics but does not bundle the CLI.
@@ -120,7 +120,7 @@ user-owned directory on the relevant host, add that directory to `PATH`, or set
 the machine-scoped `adrGuard.cli.path` in your personal VS Code settings:
 
 ```bash
-dotnet tool install --tool-path "$HOME/.dotnet/tools" RodriOliveira.AdrGuard --version 1.9.0
+dotnet tool install --tool-path "$HOME/.dotnet/tools" RodriOliveira.AdrGuard --version 1.11.0
 ```
 
 Run that optional command inside a Dev Container, WSL, SSH host, or Codespace
