@@ -89,7 +89,7 @@ tool, and external content remain untrusted inputs.
 - The .NET SDK is selected by `global.json`; NuGet dependencies are centrally
   versioned and locked per project.
 - The Dev Container image and GitHub Actions are pinned by immutable digest or SHA.
-- ADR Guard CLI `1.9.0` is pinned in `.config/dotnet-tools.json`; the matching
+- ADR Guard CLI `1.11.0` is pinned in `.config/dotnet-tools.json`; the matching
   official Action is pinned by release SHA and receives the exact version input.
 - GitHub hosts source, pull requests, Actions, Dependabot, and template settings;
   branch and organization controls are not stored in this repository.
