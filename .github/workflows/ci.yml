@@ -26,7 +26,7 @@ jobs:
         with:
           path: docs/adr
           command: check
-          version: 1.11.0
+          version: 1.12.0
 
   build-and-test:
     name: Build and test
@@ -47,7 +47,12 @@ jobs:
       - name: Restore local tools and verify ADR Guard
         run: |
           dotnet tool restore
-          test "$(dotnet tool run adr-guard -- --version)" = "1.11.0+ef132507ff3fda22db2128354086cee53b832fb1"
+          expected="1.12.0+ccce4e411ee036c5764f3837d4174f4426b076a7"
+          actual="$(dotnet tool run adr-guard -- --version)"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::ADR Guard version mismatch: expected $expected, got $actual"
+            exit 1
+          fi
 
       - name: Validate repository configuration
         run: |
