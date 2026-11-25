@@ -72,7 +72,7 @@ Consulte [Arquitetura](docs/architecture.md), [ADRs](docs/adr/README.md),
 
 O [ADR Guard](https://github.com/rodri-oliveira-dev/adr-guard) valida a coleção
 canônica em `docs/adr` conforme `.adrguard.yml`. Restaure a
-[ferramenta NuGet](https://www.nuget.org/packages/RodriOliveira.AdrGuard/1.11.0),
+[ferramenta NuGet](https://www.nuget.org/packages/RodriOliveira.AdrGuard/1.12.0),
 fixada por versão, e execute a validação somente leitura na raiz:
 
 ```bash
@@ -82,7 +82,7 @@ dotnet tool run adr-guard -- check
 ```
 
 A CLI local fornece comandos reprodutíveis de autoria e validação. A GitHub
-Action fixada por SHA executa a mesma versão `1.11.0` como gate do CI, sem IA,
+Action fixada por SHA executa a mesma versão `1.12.0` como gate do CI, sem IA,
 tokens adicionais ou serviços pagos. A
 [extensão VS Code](https://marketplace.visualstudio.com/items?itemName=rodrioliveira.adr-guard)
 é opcional e acrescenta navegação e diagnósticos, mas não inclui a CLI.
@@ -105,7 +105,7 @@ usuário no host correto, adicione-o ao `PATH` ou configure `adrGuard.cli.path` 
 escopo de máquina das suas configurações pessoais do VS Code:
 
 ```bash
-dotnet tool install --tool-path "$HOME/.dotnet/tools" RodriOliveira.AdrGuard --version 1.11.0
+dotnet tool install --tool-path "$HOME/.dotnet/tools" RodriOliveira.AdrGuard --version 1.12.0
 ```
 
 Execute esse comando opcional dentro do Dev Container, WSL, host SSH ou Codespace
@@ -113,7 +113,8 @@ quando a extensão estiver remota. Não versione um caminho absoluto da máquina
 
 Para atualizar o ADR Guard, escolha uma versão publicada e atualize em conjunto
 `.config/dotnet-tools.json`, o input `version` da Action e o SHA imutável em
-`uses`. Depois restaure a ferramenta, confira `--version`, valide os ADRs e rode
+`uses`, além da versão esperada da CLI no CI. Depois restaure a ferramenta,
+confira `--version`, valide os ADRs e rode
 toda a validação do workspace para manter CLI e CI sincronizados.
 
 ## Usar como template no GitHub
