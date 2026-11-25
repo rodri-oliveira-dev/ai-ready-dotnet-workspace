@@ -22,7 +22,7 @@ jobs:
           persist-credentials: false
 
       - name: Validate ADRs
-        uses: rodri-oliveira-dev/adr-guard@ef132507ff3fda22db2128354086cee53b832fb1 # v1.11.0
+        uses: rodri-oliveira-dev/adr-guard@ccce4e411ee036c5764f3837d4174f4426b076a7 # v1.12.0
         with:
           path: docs/adr
           command: check
